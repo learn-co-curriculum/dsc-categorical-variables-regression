@@ -9,7 +9,7 @@ We now understand the intuition behind multiple linear regression. Great! Howeve
 You will be able to:
 * Understand what categorical variables are
 * Understand the need to create dummy variables for categorical predictors 
-* Use Pandas to create dummy variables
+* Use Pandas and Scikit-Learn to create dummy variables
 
 ## The auto-mpg data
 
