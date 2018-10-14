@@ -449,8 +449,11 @@ Next, we'll remove the original columns from our data and add the dummy columns 
 
 
 ```python
-data.drop(["cylinders","model year","origin"], axis=1)
+data = data.drop(["cylinders","model year","origin"], axis=1)
+```
 
+
+```python
 data = pd.concat([data, cyl_dummies, yr_dummies, orig_dummies], axis=1)
 data.head()
 ```
@@ -477,15 +480,15 @@ data.head()
     <tr style="text-align: right;">
       <th></th>
       <th>mpg</th>
-      <th>cylinders</th>
       <th>displacement</th>
       <th>horsepower</th>
       <th>weight</th>
       <th>acceleration</th>
-      <th>model year</th>
-      <th>origin</th>
       <th>car name</th>
       <th>cyl_3</th>
+      <th>cyl_4</th>
+      <th>cyl_5</th>
+      <th>cyl_6</th>
       <th>...</th>
       <th>yr_76</th>
       <th>yr_77</th>
@@ -503,14 +506,14 @@ data.head()
     <tr>
       <th>0</th>
       <td>18.0</td>
-      <td>8</td>
       <td>307.0</td>
       <td>130</td>
       <td>3504</td>
       <td>12.0</td>
-      <td>70</td>
-      <td>1</td>
       <td>chevrolet chevelle malibu</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
       <td>0</td>
       <td>...</td>
       <td>0</td>
@@ -527,14 +530,14 @@ data.head()
     <tr>
       <th>1</th>
       <td>15.0</td>
-      <td>8</td>
       <td>350.0</td>
       <td>165</td>
       <td>3693</td>
       <td>11.5</td>
-      <td>70</td>
-      <td>1</td>
       <td>buick skylark 320</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
       <td>0</td>
       <td>...</td>
       <td>0</td>
@@ -551,14 +554,14 @@ data.head()
     <tr>
       <th>2</th>
       <td>18.0</td>
-      <td>8</td>
       <td>318.0</td>
       <td>150</td>
       <td>3436</td>
       <td>11.0</td>
-      <td>70</td>
-      <td>1</td>
       <td>plymouth satellite</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
       <td>0</td>
       <td>...</td>
       <td>0</td>
@@ -575,14 +578,14 @@ data.head()
     <tr>
       <th>3</th>
       <td>16.0</td>
-      <td>8</td>
       <td>304.0</td>
       <td>150</td>
       <td>3433</td>
       <td>12.0</td>
-      <td>70</td>
-      <td>1</td>
       <td>amc rebel sst</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
       <td>0</td>
       <td>...</td>
       <td>0</td>
@@ -599,14 +602,14 @@ data.head()
     <tr>
       <th>4</th>
       <td>17.0</td>
-      <td>8</td>
       <td>302.0</td>
       <td>140</td>
       <td>3449</td>
       <td>10.5</td>
-      <td>70</td>
-      <td>1</td>
       <td>ford torino</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
       <td>0</td>
       <td>...</td>
       <td>0</td>
@@ -622,7 +625,7 @@ data.head()
     </tr>
   </tbody>
 </table>
-<p>5 rows × 30 columns</p>
+<p>5 rows × 111 columns</p>
 </div>
 
 
