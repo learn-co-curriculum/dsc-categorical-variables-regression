@@ -3,7 +3,7 @@
 
 ## Introduction
 
-We now understand the intuition behind multiple linear regression. Great! However, because we'll start digging into bigger data sets with more predictors, we'll come across predictors that are slightly different from what we've seen before. Welcome to the wonderous world of categorical variables!
+You now understand the intuition behind multiple linear regression. Great! However, because you'll start digging into bigger data sets with more predictors, you'll come across predictors that are slightly different from what you've seen before. Welcome to the wonderous world of categorical variables!
 
 ## Objectives
 You will be able to:
@@ -13,7 +13,7 @@ You will be able to:
 
 ## The auto-mpg data
 
-In this section, we'll use the auto-mpg data to illustrate several elements of multiple linear regression. The auto-mpg data set contains technical specifications of cars. This data set is often used by aspiring data scientists who want to practice linear regression with multiple predictors. Generally, the `mpg` column (for "mileage per gallion") is the dependent variable, and what we want to know is how the other columns ("predictors") in the data set affect the mpg. Let's have a look at the data:
+In this section, you'll see several elements of multiple linear regression using the auto-mpg data. The auto-mpg data set contains technical specifications of cars. This data set is often used by aspiring data scientists who want to practice linear regression with multiple predictors. Generally, the `mpg` column (for "mileage per gallion") is the dependent variable, and what we want to know is how the other columns ("predictors") in the data set affect the mpg. Let's have a look at the data:
 
 
 ```python
@@ -194,6 +194,10 @@ for xcol, ax in zip(['acceleration', 'displacement', 'horsepower', 'weight'], ax
 ```
 
 
+![png](index_files/index_13_0.png)
+
+
+
 ```python
 fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12,3))
 
@@ -205,7 +209,7 @@ for xcol, ax in zip([ 'cylinders', 'model year', 'origin'], axes):
 ![png](index_files/index_14_0.png)
 
 
-In the upper plots, we plotted the scatter plots for the continuous variables, and in the lower 3 plots, we plotted them for the categorical variables. You can tell the structure looks very different: instead of getting a pretty homogenous "cloud", our categorical variables creating scatter plots generates vertical lines, for discrete values. Another plot type that may ne useful looking at is the histogram.
+Note the structural difference between the top and bottom set of graphs. You can tell the structure looks very different: instead of getting a pretty homogenous "cloud", our categorical variables creating scatter plots generates vertical lines, for discrete values. Another plot type that may ne useful looking at is the histogram.
 
 
 ```python
@@ -320,7 +324,7 @@ Note that where `.cat.codes` can only be used on variables that are transformed 
 
 ### Creating Dummy Variables
 
-Another way to transform categorical variables is through using on-hot encoding or "dummy variables". The idea is to convert each category into anew column, and assign a 1 or 0 to the column. There are several libraries that support one-hot encoding, we'll cover 2 here:
+Another way to transform categorical variables is through using on-hot encoding or "dummy variables". The idea is to convert each category into anew column, and assign a 1 or 0 to the column. There are several libraries that support one-hot encoding, let's take a look at two:
 
 
 ```python
@@ -445,7 +449,7 @@ yr_dummies = pd.get_dummies(data["model year"], prefix="yr")
 orig_dummies = pd.get_dummies(data["origin"], prefix="orig")
 ```
 
-Next, we'll remove the original columns from our data and add the dummy columns instead
+Next, let's remove the original columns from our data and add the dummy columns instead
 
 
 ```python
@@ -625,7 +629,7 @@ data.head()
     </tr>
   </tbody>
 </table>
-<p>5 rows × 111 columns</p>
+<p>5 rows × 27 columns</p>
 </div>
 
 
