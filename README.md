@@ -3,7 +3,7 @@
 
 ## Introduction
 
-You now understand the intuition behind multiple linear regression. Great! However, because you'll start digging into bigger data sets with more predictors, you'll come across predictors that are slightly different from what you've seen before. Welcome to the wonderous world of categorical variables!
+You now understand the intuition behind multiple linear regression. Great! However, because you'll start digging into bigger data sets with more predictors, you'll come across predictors that are slightly different from what you've seen before. Welcome to the wondrous world of categorical variables!
 
 ## Objectives
 You will be able to:
@@ -194,7 +194,7 @@ for xcol, ax in zip(['acceleration', 'displacement', 'horsepower', 'weight'], ax
 ```
 
 
-![png](index_files/index_13_0.png)
+![png](index_files/index_7_0.png)
 
 
 
@@ -206,7 +206,7 @@ for xcol, ax in zip([ 'cylinders', 'model year', 'origin'], axes):
 ```
 
 
-![png](index_files/index_14_0.png)
+![png](index_files/index_8_0.png)
 
 
 Note the structural difference between the top and bottom set of graphs. You can tell the structure looks very different: instead of getting a pretty homogenous "cloud", our categorical variables creating scatter plots generates vertical lines, for discrete values. Another plot type that may ne useful looking at is the histogram.
@@ -221,7 +221,7 @@ data.hist(ax = ax);
 ```
 
 
-![png](index_files/index_16_0.png)
+![png](index_files/index_10_0.png)
 
 
 And the number of unique values.
@@ -324,7 +324,7 @@ Note that where `.cat.codes` can only be used on variables that are transformed 
 
 ### Creating Dummy Variables
 
-Another way to transform categorical variables is through using on-hot encoding or "dummy variables". The idea is to convert each category into anew column, and assign a 1 or 0 to the column. There are several libraries that support one-hot encoding, let's take a look at two:
+Another way to transform categorical variables is through using one-hot encoding or "dummy variables". The idea is to convert each category into a new column, and assign a 1 or 0 to the column. There are several libraries that support one-hot encoding, let's take a look at two:
 
 
 ```python
