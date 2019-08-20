@@ -13,7 +13,7 @@ You will be able to:
 
 ## The auto-mpg data
 
-In this section, you'll see several elements of multiple linear regression using the auto-mpg data. The auto-mpg data set contains technical specifications of cars. This data set is often used by aspiring data scientists who want to practice linear regression with multiple predictors. Generally, the `mpg` column (for "mileage per gallion") is the dependent variable, and what we want to know is how the other columns ("predictors") in the data set affect the mpg. Let's have a look at the data:
+In this section, you'll see several elements of preparing data for multiple linear regression using the auto-mpg data set. The auto-mpg data set contains technical specifications of cars. This data set is often used by aspiring data scientists who want to practice linear regression with multiple predictors. Generally, the `mpg` column (for "mileage per gallion") is the dependent variable, and what we want to know is how the other columns ("predictors") in the data set affect the mpg. Let's have a look at the data:
 
 
 ```python
@@ -176,7 +176,7 @@ print(data["origin"].nunique())
 Values range from 1 to 3, moreover, actually the only values that are in the dataset are 1, 2 and 3! it turns out that "origin" is a so-called **categorical** variable. It does not represent a continuous number but refers to a location - say 1 may stand for US, 2 for Europe, 3 for Asia (note: for this data set the actual meaning is not disclosed).
 
 So, categorical variables are exactly what they sound like: they represent categories instead of numerical features. 
-Note that, even though that's not the case here, these features are often stored as text values which represent various levels of the observations. An example of this is gender: it can be described as "M" ("Male") or "F"("Female"), etc.
+Note that, even though that's not the case here, these features are often stored as text values which represent various levels of the observations.
 
 ## Identifying categorical variables
 
@@ -194,10 +194,6 @@ for xcol, ax in zip(['acceleration', 'displacement', 'horsepower', 'weight'], ax
 ```
 
 
-![png](index_files/index_7_0.png)
-
-
-
 ```python
 fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12,3))
 
@@ -209,7 +205,7 @@ for xcol, ax in zip([ 'cylinders', 'model year', 'origin'], axes):
 ![png](index_files/index_8_0.png)
 
 
-Note the structural difference between the top and bottom set of graphs. You can tell the structure looks very different: instead of getting a pretty homogenous "cloud", our categorical variables creating scatter plots generates vertical lines, for discrete values. Another plot type that may ne useful looking at is the histogram.
+Note the structural difference between the top and bottom set of graphs. You can tell the structure looks very different: instead of getting a pretty homogeneous "cloud", categorical variables generate vertical lines for discrete values. Another plot type that may be useful to look at is the histogram.
 
 
 ```python
@@ -224,7 +220,22 @@ data.hist(ax = ax);
 ![png](index_files/index_10_0.png)
 
 
-And the number of unique values.
+And the number of unique values:
+
+
+```python
+data[['cylinders', 'model year', 'origin']].nunique()
+```
+
+
+
+
+    cylinders      5
+    model year    13
+    origin         3
+    dtype: int64
+
+
 
 ## Transforming categorical variables
 
@@ -241,8 +252,6 @@ Let's illustrate label encoding and dummy creation with the following Pandas Ser
 origin = ["USA", "EU", "EU", "ASIA","USA", "EU", "EU", "ASIA", "ASIA", "USA"]
 origin_series = pd.Series(origin)
 ```
-
-Now when calling the .dtype() 
 
 Now you'll want to make sure Python recognizes there strings as categories. This can be done as follows:
 
@@ -320,7 +329,7 @@ origin_encoded
 
 
 
-Note that where `.cat.codes` can only be used on variables that are transformed using `.astype(category)`, this is not a requirement to use `LabelEncoder`.
+Note that while `.cat.codes` can only be used on variables that are transformed using `.astype(category)`, this is not a requirement to use `LabelEncoder`.
 
 ### Creating Dummy Variables
 
@@ -434,9 +443,103 @@ lb = LabelBinarizer()
 origin_dummies = lb.fit_transform(cat_origin)
 # you need to convert this back to a dataframe
 origin_dum_df = pd.DataFrame(origin_dummies,columns=lb.classes_)
+origin_dum_df
 ```
 
-The advantage of using dummies is that, whatever algorithm you'll be using, your numerical values cannot be misinterpreted as being continuous. Going forward, it's important to know that for linear regression (and most other algorithms in scikit-learn), **one-hot encoding is required** when adding categorical variables in a regression model!
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ASIA</th>
+      <th>EU</th>
+      <th>USA</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+The advantage of using dummies is that, whatever algorithm you'll be using, your numerical values cannot be misinterpreted as being continuous. Going forward, it's important to know that for linear regression (and most other algorithms in scikit-learn), **one-hot encoding is required** when adding categorical variables in a regression model! You'll also see you may need to be mindful of the number of dummies you create in certain contexts. 
 
 ## Back to our auto-mpg data
 
