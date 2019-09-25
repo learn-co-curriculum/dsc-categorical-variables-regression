@@ -3,7 +3,7 @@
 
 ## Introduction
 
-You now understand the intuition behind multiple linear regression. Great! However, because you'll start digging into bigger data sets with more predictors, you'll come across predictors that are slightly different from what you've seen before. Welcome to the wondrous world of categorical variables!
+You now understand the intuition behind multiple linear regression. Great! However, because you'll start digging into bigger datasets with more predictors, you'll come across predictors that are slightly different from what you've seen before. Welcome to the wondrous world of categorical variables!
 
 ## Objectives
 You will be able to:
@@ -14,7 +14,7 @@ You will be able to:
 
 ## The auto-mpg data
 
-In this section, you'll see several elements of preparing data for multiple linear regression using the auto-mpg data set. The auto-mpg data set contains technical specifications of cars. This data set is often used by aspiring data scientists who want to practice linear regression with multiple predictors. Generally, the `mpg` column (for "mileage per gallion") is the dependent variable, and what we want to know is how the other columns ("predictors") in the data set affect the mpg. Let's have a look at the data:
+In this section, you'll see several elements of preparing data for multiple linear regression using the auto-mpg dataset, which contains technical specifications of cars. This dataset is often used by aspiring Data Scientists who want to practice linear regression with multiple predictors. Generally, the `mpg` column (for "mileage per gallion") is the dependent variable, and what we want to know is how the other columns ("predictors") in the dataset affect the mpg. Let's have a look at the data:
 
 
 ```python
@@ -174,14 +174,14 @@ print(data["origin"].nunique())
     3
 
 
-Values range from 1 to 3, moreover, actually the only values that are in the dataset are 1, 2 and 3! it turns out that "origin" is a so-called **categorical** variable. It does not represent a continuous number but refers to a location - say 1 may stand for US, 2 for Europe, 3 for Asia (note: for this data set the actual meaning is not disclosed).
+Values range from 1 to 3, moreover, actually the only values that are in the dataset are 1, 2 and 3! it turns out that "origin" is a so-called **categorical** variable. It does not represent a continuous number but refers to a location - say 1 may stand for US, 2 for Europe, 3 for Asia (note: for this dataset the actual meaning is not disclosed).
 
 So, categorical variables are exactly what they sound like: they represent categories instead of numerical features. 
 Note that, even though that's not the case here, these features are often stored as text values which represent various levels of the observations.
 
 ## Identifying categorical variables
 
-As categorical variables need to be treated in a particular manner, as you'll see later on, you need to make sure to identify which variables are categorical. In some cases, identifying will be easy (e.g. if they are stored as strings), in other cases they are numeric and the fact that they are categorical is not always immediately apparent.  Note that this may not be trivial. A first thing you can do is use the `.describe()` function and `.info()`-function and get a better sense. `.describe()` will give you info on the data types (like strings, integers, etc), but even then continuous variables might have been imported as strings, so it's very important to really have a look at your data. This is illustrated in the scatter plots below.
+As categorical variables need to be treated in a particular manner, as you'll see later on, you need to make sure to identify which variables are categorical. In some cases, identifying will be easy (e.g. if they are stored as strings), in other cases they are numeric and the fact that they are categorical is not always immediately apparent.  Note that this may not be trivial. A first thing you can do is use the `.describe()` and `.info()` methods. `.describe()` will give you info on the data types (like strings, integers, etc), but even then continuous variables might have been imported as strings, so it's very important to really have a look at your data. This is illustrated in the scatter plots below.
 
 
 ```python
@@ -280,7 +280,7 @@ cat_origin
 
 
 
-Note how the dtype() here is category and the 3 categories are detected.
+Note how the `dtype()` here is category and the 3 categories are detected.
 
 Sometimes you'll want to represent your labels as numbers. This is called label encoding.
 
@@ -308,7 +308,7 @@ cat_origin.cat.codes
 
 
 
-Another way is to use scikit-learn's LabelEncoder:
+Another way is to use scikit-learn's `LabelEncoder`:
 
 
 ```python
@@ -434,7 +434,7 @@ pd.get_dummies(cat_origin)
 
 
 
-See how the label name has become the column name! Another method is through using the LabelBinarizer in scikit-learn. 
+See how the label name has become the column name! Another method is through using the `LabelBinarizer` in scikit-learn. 
 
 
 ```python
@@ -818,7 +818,7 @@ pd.get_dummies(cat_origin, drop_first=True)
 
 
 
-If you take a close look at the dataframe above, you'll see that there is no longer enough information to predict any of the columns so the multicollinearity has been eliminated. 
+If you take a close look at the DataFrame above, you'll see that there is no longer enough information to predict any of the columns so the multicollinearity has been eliminated. 
 
 You'll soon see that dropping the first variable affects the interpretation of regression coefficients. The dropped category becomes what is known as the **reference category**. The regression coefficients that result from fitting the remaining variables represent the change *relative* to the reference.
 
@@ -826,7 +826,7 @@ You'll also see that in certain contexts, multicollinearity and the dummy variab
 
 ## Back to our auto-mpg data
 
-Let's go ahead and change our "cylinders", "model year" and "origin" columns over to dummies and drop the first variable.
+Let's go ahead and change our "cylinders", "model year", and "origin" columns over to dummies and drop the first variable.
 
 
 ```python
@@ -1021,4 +1021,4 @@ data.head()
 
 
 ## Summary
-Great! In this lecture, you learned about categorical variables, and how to include them in your multiple linear regression model using label encoding or dummy variables. You also learned about the dummy variable trap and how it can be avoided.
+Great! In this lesson, you learned about categorical variables, and how to include them in your multiple linear regression model using label encoding or dummy variables. You also learned about the dummy variable trap and how it can be avoided.
