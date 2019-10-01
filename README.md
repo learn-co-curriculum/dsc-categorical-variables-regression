@@ -18,10 +18,10 @@ In this section, you'll see several elements of preparing data for multiple line
 
 
 ```python
-## import numpy as np
 import pandas as pd
-data = pd.read_csv("auto-mpg.csv")
-data['horsepower'].astype(str).astype(int) # don't worry about this for now
+data = pd.read_csv('auto-mpg.csv')
+# First convert horsepower into a string and then to int
+data['horsepower'].astype(str).astype(int)
 data.head()
 ```
 
@@ -152,7 +152,7 @@ Now let's take a closer look at the column "origin".
 
 
 ```python
-print(data["origin"].describe())
+print(data['origin'].describe())
 ```
 
     count    392.000000
@@ -168,7 +168,7 @@ print(data["origin"].describe())
 
 
 ```python
-print(data["origin"].nunique())
+print(data['origin'].nunique())
 ```
 
     3
@@ -185,14 +185,18 @@ As categorical variables need to be treated in a particular manner, as you'll se
 
 
 ```python
-import pandas as pd
 import matplotlib.pyplot as plt
+%matplotlib inline
 
 fig, axes = plt.subplots(nrows=1, ncols=4, figsize=(16,3))
 
 for xcol, ax in zip(['acceleration', 'displacement', 'horsepower', 'weight'], axes):
     data.plot(kind='scatter', x=xcol, y='mpg', ax=ax, alpha=0.4, color='b')
 ```
+
+
+![png](index_files/index_7_0.png)
+
 
 
 ```python
@@ -250,7 +254,7 @@ Let's illustrate label encoding and dummy creation with the following Pandas Ser
 
 
 ```python
-origin = ["USA", "EU", "EU", "ASIA","USA", "EU", "EU", "ASIA", "ASIA", "USA"]
+origin = ['USA', 'EU', 'EU', 'ASIA','USA', 'EU', 'EU', 'ASIA', 'ASIA', 'USA']
 origin_series = pd.Series(origin)
 ```
 
@@ -280,7 +284,7 @@ cat_origin
 
 
 
-Note how the `dtype()` here is category and the 3 categories are detected.
+Note how the `dtype` (i.e., data type) here is `category` and the three categories are detected.
 
 Sometimes you'll want to represent your labels as numbers. This is called label encoding.
 
@@ -442,7 +446,7 @@ from sklearn.preprocessing import LabelBinarizer
 
 lb = LabelBinarizer()
 origin_dummies = lb.fit_transform(cat_origin)
-# you need to convert this back to a dataframe
+# You need to convert this back to a dataframe
 origin_dum_df = pd.DataFrame(origin_dummies,columns=lb.classes_)
 origin_dum_df
 ```
@@ -650,8 +654,8 @@ As a consequence of creating dummy variables for every origin, you can now predi
 
 ```python
 # Predict ASIA column from EU and USA
-predicted_asia = 1 - (trap_df["EU"] + trap_df["USA"])
-predicted_asia.to_frame(name="Predicted_ASIA")
+predicted_asia = 1 - (trap_df['EU'] + trap_df['USA'])
+predicted_asia.to_frame(name='Predicted_ASIA')
 ```
 
 
@@ -830,16 +834,16 @@ Let's go ahead and change our "cylinders", "model year", and "origin" columns ov
 
 
 ```python
-cyl_dummies = pd.get_dummies(data["cylinders"], prefix="cyl", drop_first=True)
-yr_dummies = pd.get_dummies(data["model year"], prefix="yr", drop_first=True)
-orig_dummies = pd.get_dummies(data["origin"], prefix="orig", drop_first=True)
+cyl_dummies = pd.get_dummies(data['cylinders'], prefix='cyl', drop_first=True)
+yr_dummies = pd.get_dummies(data['model year'], prefix='yr', drop_first=True)
+orig_dummies = pd.get_dummies(data['origin'], prefix='orig', drop_first=True)
 ```
 
 Next, let's remove the original columns from our data and add the dummy columns instead
 
 
 ```python
-data = data.drop(["cylinders","model year","origin"], axis=1)
+data = data.drop(['cylinders','model year','origin'], axis=1)
 ```
 
 
