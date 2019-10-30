@@ -7,10 +7,9 @@ You now understand the intuition behind multiple linear regression. Great! Howev
 
 ## Objectives
 You will be able to:
-* Understand what categorical variables are
-* Understand the need to create dummy variables for categorical predictors 
-* Use Pandas and Scikit-Learn to create dummy variables
-* Understand the dummy variable trap and how to avoid it
+* Determine whether variables are categorical or continuous
+* Describe why dummy variables are necessary
+* Use one hot encoding to create dummy variable
 
 ## The auto-mpg data
 
@@ -1025,4 +1024,4 @@ data.head()
 
 
 ## Summary
-Great! In this lesson, you learned about categorical variables, and how to include them in your multiple linear regression model using label encoding or dummy variables. You also learned about the dummy variable trap and how it can be avoided.
+Great! In this lesson, you learned about categorical variables and how they are different from continuous variables. You also learned how to include them in your multiple linear regression model using label encoding or dummy variables. You also learned about the dummy variable trap and how it can be avoided.
