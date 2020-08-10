@@ -6,14 +6,16 @@
 You now understand the intuition behind multiple linear regression. Great! However, because you'll start digging into bigger datasets with more predictors, you'll come across predictors that are slightly different from what you've seen before. Welcome to the wondrous world of categorical variables!
 
 ## Objectives
+
 You will be able to:
-* Determine whether variables are categorical or continuous
-* Describe why dummy variables are necessary
-* Use one hot encoding to create dummy variable
+
+- Determine whether variables are categorical or continuous
+- Describe why dummy variables are necessary
+- Use one hot encoding to create dummy variable
 
 ## The auto-mpg data
 
-In this section, you'll see several elements of preparing data for multiple linear regression using the auto-mpg dataset, which contains technical specifications of cars. This dataset is often used by aspiring Data Scientists who want to practice linear regression with multiple predictors. Generally, the `mpg` column (for "mileage per gallion") is the dependent variable, and what we want to know is how the other columns ("predictors") in the dataset affect the mpg. Let's have a look at the data:
+In this section, you'll see several elements of preparing data for multiple linear regression using the auto-mpg dataset, which contains technical specifications of cars. This dataset is often used by aspiring Data Scientists who want to practice linear regression with multiple predictors. Generally, the `mpg` column ("miles per gallon") is the dependent variable, and what we want to know is how the other columns ("predictors") in the dataset affect the mpg. Let's have a look at the data:
 
 
 ```python
