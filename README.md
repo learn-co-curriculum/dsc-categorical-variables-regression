@@ -1,4 +1,3 @@
-
 # Dealing with Categorical Variables
 
 ## Introduction
@@ -196,7 +195,9 @@ for xcol, ax in zip(['acceleration', 'displacement', 'horsepower', 'weight'], ax
 ```
 
 
+    
 ![png](index_files/index_7_0.png)
+    
 
 
 
@@ -208,7 +209,9 @@ for xcol, ax in zip([ 'cylinders', 'model year', 'origin'], axes):
 ```
 
 
+    
 ![png](index_files/index_8_0.png)
+    
 
 
 Note the structural difference between the top and bottom set of graphs. You can tell the structure looks very different: instead of getting a pretty homogeneous "cloud", categorical variables generate vertical lines for discrete values. Another plot type that may be useful to look at is the histogram.
@@ -223,7 +226,9 @@ data.hist(ax = ax);
 ```
 
 
+    
 ![png](index_files/index_10_0.png)
+    
 
 
 And the number of unique values:
@@ -259,7 +264,7 @@ origin = ['USA', 'EU', 'EU', 'ASIA','USA', 'EU', 'EU', 'ASIA', 'ASIA', 'USA']
 origin_series = pd.Series(origin)
 ```
 
-Now you'll want to make sure Python recognizes there strings as categories. This can be done as follows:
+Now you'll want to make sure Python recognizes these strings as categories. This can be done as follows:
 
 
 ```python
