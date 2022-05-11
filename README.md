@@ -2,27 +2,25 @@
 
 ## Introduction
 
-You now understand the intuition behind multiple linear regression. Great! However, because you'll start digging into bigger datasets with more predictors, you'll come across predictors that are slightly different from what you've seen before. Welcome to the wondrous world of categorical variables!
+So far, we have assumed that our predictors (independent variables) are numeric. How can we incorporate categorical data into our regression models as well? This lesson demonstrates how to use an approach called one-hot encoding to do just this.
 
 ## Objectives
 
 You will be able to:
 
-- Determine whether variables are categorical or continuous
+- Determine whether variables are categorical or numeric
 - Describe why dummy variables are necessary
-- Use one hot encoding to create dummy variable
+- Use one-hot encoding to create dummy variables
 
-## The auto-mpg data
+## Variable Types: Numeric and Categorical
 
-In this section, you'll see several elements of preparing data for multiple linear regression using the auto-mpg dataset, which contains technical specifications of cars. This dataset is often used by aspiring Data Scientists who want to practice linear regression with multiple predictors. Generally, the `mpg` column ("miles per gallon") is the dependent variable, and what we want to know is how the other columns ("predictors") in the dataset affect the mpg. Let's have a look at the data:
+Let's look at the Auto MPG dataset:
 
 
 ```python
 import pandas as pd
-data = pd.read_csv('auto-mpg.csv')
-# First convert horsepower into a string and then to int
-data['horsepower'].astype(str).astype(int)
-data.head()
+data = pd.read_csv("auto-mpg.csv")
+data
 ```
 
 
@@ -118,744 +116,91 @@ data.head()
       <td>1</td>
       <td>ford torino</td>
     </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>387</th>
+      <td>27.0</td>
+      <td>4</td>
+      <td>140.0</td>
+      <td>86</td>
+      <td>2790</td>
+      <td>15.6</td>
+      <td>82</td>
+      <td>1</td>
+      <td>ford mustang gl</td>
+    </tr>
+    <tr>
+      <th>388</th>
+      <td>44.0</td>
+      <td>4</td>
+      <td>97.0</td>
+      <td>52</td>
+      <td>2130</td>
+      <td>24.6</td>
+      <td>82</td>
+      <td>2</td>
+      <td>vw pickup</td>
+    </tr>
+    <tr>
+      <th>389</th>
+      <td>32.0</td>
+      <td>4</td>
+      <td>135.0</td>
+      <td>84</td>
+      <td>2295</td>
+      <td>11.6</td>
+      <td>82</td>
+      <td>1</td>
+      <td>dodge rampage</td>
+    </tr>
+    <tr>
+      <th>390</th>
+      <td>28.0</td>
+      <td>4</td>
+      <td>120.0</td>
+      <td>79</td>
+      <td>2625</td>
+      <td>18.6</td>
+      <td>82</td>
+      <td>1</td>
+      <td>ford ranger</td>
+    </tr>
+    <tr>
+      <th>391</th>
+      <td>31.0</td>
+      <td>4</td>
+      <td>119.0</td>
+      <td>82</td>
+      <td>2720</td>
+      <td>19.4</td>
+      <td>82</td>
+      <td>1</td>
+      <td>chevy s-10</td>
+    </tr>
   </tbody>
 </table>
+<p>392 rows × 9 columns</p>
 </div>
 
 
 
-
-```python
-data.info()
-```
-
-    <class 'pandas.core.frame.DataFrame'>
-    RangeIndex: 392 entries, 0 to 391
-    Data columns (total 9 columns):
-    mpg             392 non-null float64
-    cylinders       392 non-null int64
-    displacement    392 non-null float64
-    horsepower      392 non-null int64
-    weight          392 non-null int64
-    acceleration    392 non-null float64
-    model year      392 non-null int64
-    origin          392 non-null int64
-    car name        392 non-null object
-    dtypes: float64(3), int64(5), object(1)
-    memory usage: 27.6+ KB
-
-
-Except for "car name", every other column seems to be a candidate predictor for miles per gallon. 
-
-## What are categorical variables?
-Now let's take a closer look at the column "origin". 
+We'll also engineer a new feature, `make`, using the `car name` feature:
 
 
 ```python
-print(data['origin'].describe())
-```
-
-    count    392.000000
-    mean       1.576531
-    std        0.805518
-    min        1.000000
-    25%        1.000000
-    50%        1.000000
-    75%        2.000000
-    max        3.000000
-    Name: origin, dtype: float64
-
-
-
-```python
-print(data['origin'].nunique())
-```
-
-    3
-
-
-Values range from 1 to 3, moreover, actually the only values that are in the dataset are 1, 2 and 3! it turns out that "origin" is a so-called **categorical** variable. It does not represent a continuous number but refers to a location - say 1 may stand for US, 2 for Europe, 3 for Asia (note: for this dataset the actual meaning is not disclosed).
-
-So, categorical variables are exactly what they sound like: they represent categories instead of numerical features. 
-Note that, even though that's not the case here, these features are often stored as text values which represent various levels of the observations.
-
-## Identifying categorical variables
-
-As categorical variables need to be treated in a particular manner, as you'll see later on, you need to make sure to identify which variables are categorical. In some cases, identifying will be easy (e.g. if they are stored as strings), in other cases they are numeric and the fact that they are categorical is not always immediately apparent.  Note that this may not be trivial. A first thing you can do is use the `.describe()` and `.info()` methods. `.describe()` will give you info on the data types (like strings, integers, etc), but even then continuous variables might have been imported as strings, so it's very important to really have a look at your data. This is illustrated in the scatter plots below.
-
-
-```python
-import matplotlib.pyplot as plt
-%matplotlib inline
-
-fig, axes = plt.subplots(nrows=1, ncols=4, figsize=(16,3))
-
-for xcol, ax in zip(['acceleration', 'displacement', 'horsepower', 'weight'], axes):
-    data.plot(kind='scatter', x=xcol, y='mpg', ax=ax, alpha=0.4, color='b')
-```
-
-
-    
-![png](index_files/index_7_0.png)
-    
-
-
-
-```python
-fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12,3))
-
-for xcol, ax in zip([ 'cylinders', 'model year', 'origin'], axes):
-    data.plot(kind='scatter', x=xcol, y='mpg', ax=ax, alpha=0.4, color='b')
-```
-
-
-    
-![png](index_files/index_8_0.png)
-    
-
-
-Note the structural difference between the top and bottom set of graphs. You can tell the structure looks very different: instead of getting a pretty homogeneous "cloud", categorical variables generate vertical lines for discrete values. Another plot type that may be useful to look at is the histogram.
-
-
-```python
-import warnings
-warnings.filterwarnings('ignore')
-fig = plt.figure(figsize = (8,8))
-ax = fig.gca()
-data.hist(ax = ax);
-```
-
-
-    
-![png](index_files/index_10_0.png)
-    
-
-
-And the number of unique values:
-
-
-```python
-data[['cylinders', 'model year', 'origin']].nunique()
-```
-
-
-
-
-    cylinders      5
-    model year    13
-    origin         3
-    dtype: int64
-
-
-
-## Transforming categorical variables
-
-When you want to use categorical variables in regression models, they need to be transformed. There are two approaches to this:
-- 1) Perform label encoding
-- 2) Create dummy variables / one-hot-encoding
-
-### Label encoding
-
-Let's illustrate label encoding and dummy creation with the following Pandas Series with 3 categories: "USA", "EU" and "ASIA".
-
-
-```python
-origin = ['USA', 'EU', 'EU', 'ASIA','USA', 'EU', 'EU', 'ASIA', 'ASIA', 'USA']
-origin_series = pd.Series(origin)
-```
-
-Now you'll want to make sure Python recognizes these strings as categories. This can be done as follows:
-
-
-```python
-cat_origin = origin_series.astype('category')
-cat_origin
-```
-
-
-
-
-    0     USA
-    1      EU
-    2      EU
-    3    ASIA
-    4     USA
-    5      EU
-    6      EU
-    7    ASIA
-    8    ASIA
-    9     USA
-    dtype: category
-    Categories (3, object): [ASIA, EU, USA]
-
-
-
-Note how the `dtype` (i.e., data type) here is `category` and the three categories are detected.
-
-Sometimes you'll want to represent your labels as numbers. This is called label encoding.
-
-You'll perform label encoding in a way that numerical labels are always between 0 and (number_of_categories)-1. There are several ways to do this, one way is using `.cat.codes`
-
-
-```python
-cat_origin.cat.codes
-```
-
-
-
-
-    0    2
-    1    1
-    2    1
-    3    0
-    4    2
-    5    1
-    6    1
-    7    0
-    8    0
-    9    2
-    dtype: int8
-
-
-
-Another way is to use scikit-learn's `LabelEncoder`:
-
-
-```python
-from sklearn.preprocessing import LabelEncoder
-lb_make = LabelEncoder()
-
-origin_encoded = lb_make.fit_transform(cat_origin)
-```
-
-
-```python
-origin_encoded
-```
-
-
-
-
-    array([2, 1, 1, 0, 2, 1, 1, 0, 0, 2])
-
-
-
-Note that while `.cat.codes` can only be used on variables that are transformed using `.astype(category)`, this is not a requirement to use `LabelEncoder`.
-
-### Creating Dummy Variables
-
-Another way to transform categorical variables is through using one-hot encoding or "dummy variables". The idea is to convert each category into a new column, and assign a 1 or 0 to the column. There are several libraries that support one-hot encoding, let's take a look at two:
-
-
-```python
-pd.get_dummies(cat_origin)
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>ASIA</th>
-      <th>EU</th>
-      <th>USA</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>6</th>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>8</th>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>9</th>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-See how the label name has become the column name! Another method is through using the `LabelBinarizer` in scikit-learn. 
-
-
-```python
-from sklearn.preprocessing import LabelBinarizer
-
-lb = LabelBinarizer()
-origin_dummies = lb.fit_transform(cat_origin)
-# You need to convert this back to a dataframe
-origin_dum_df = pd.DataFrame(origin_dummies,columns=lb.classes_)
-origin_dum_df
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>ASIA</th>
-      <th>EU</th>
-      <th>USA</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>6</th>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>8</th>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>9</th>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-The advantage of using dummies is that, whatever algorithm you'll be using, your numerical values cannot be misinterpreted as being continuous. Going forward, it's important to know that for linear regression (and most other algorithms in scikit-learn), **one-hot encoding is required** when adding categorical variables in a regression model!
-
-## The Dummy Variable Trap
-
-Due to the nature of how dummy variables are created, one variable can be predicted from all of the others. This is known as perfect **multicollinearity** and it can be a problem for regression. Multicollinearity will be covered in depth later but the basic idea behind perfect multicollinearity is that you can *perfectly* predict what one variable will be using some combination of the other variables. If this isn't super clear, go back to the one-hot encoded origin data above:
-
-
-```python
-trap_df = pd.get_dummies(cat_origin)
-trap_df
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>ASIA</th>
-      <th>EU</th>
-      <th>USA</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>6</th>
-      <td>0</td>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>8</th>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>9</th>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-As a consequence of creating dummy variables for every origin, you can now predict any single origin dummy variable using the information from all of the others. OK, that might sound more like a tongue twister than an explanation so focus on the ASIA column for now. You can perfectly predict this column by adding the values in the EU and USA columns then subtracting the sum from 1 as shown below:
-
-
-```python
-# Predict ASIA column from EU and USA
-predicted_asia = 1 - (trap_df['EU'] + trap_df['USA'])
-predicted_asia.to_frame(name='Predicted_ASIA')
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Predicted_ASIA</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>6</th>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>8</th>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>9</th>
-      <td>0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-EU and USA can be predicted in a similar manner which you can work out on your own. 
-
-You are probably wondering why this is a problem for regression. Recall that the coefficients derived from a regression model are used to make predictions. In a multiple linear regression, the coefficients represent the average change in the dependent variable for each 1 unit change in a predictor variable, assuming that all the other predictor variables are kept constant. This is no longer the case when predictor variables are related which, as you've just seen, happens automatically when you create dummy variables. This is what is known as the **Dummy Variable Trap**.
-
-Fortunately, the dummy variable trap can be avoided by simply dropping one of the dummy variables. You can do this by subsetting the dataframe manually or, more conveniently, by passing ```drop_first=True``` to ```get_dummies()```: 
-
-
-```python
-pd.get_dummies(cat_origin, drop_first=True)
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>EU</th>
-      <th>USA</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>6</th>
-      <td>1</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>8</th>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>9</th>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-If you take a close look at the DataFrame above, you'll see that there is no longer enough information to predict any of the columns so the multicollinearity has been eliminated. 
-
-You'll soon see that dropping the first variable affects the interpretation of regression coefficients. The dropped category becomes what is known as the **reference category**. The regression coefficients that result from fitting the remaining variables represent the change *relative* to the reference.
-
-You'll also see that in certain contexts, multicollinearity and the dummy variable trap are less of an issue and can be ignored. It is therefore important to understand which models are sensitive to multicollinearity and which are not.
-
-## Back to our auto-mpg data
-
-Let's go ahead and change our "cylinders", "model year", and "origin" columns over to dummies and drop the first variable.
-
-
-```python
-cyl_dummies = pd.get_dummies(data['cylinders'], prefix='cyl', drop_first=True)
-yr_dummies = pd.get_dummies(data['model year'], prefix='yr', drop_first=True)
-orig_dummies = pd.get_dummies(data['origin'], prefix='orig', drop_first=True)
-```
-
-Next, let's remove the original columns from our data and add the dummy columns instead
-
-
-```python
-data = data.drop(['cylinders','model year','origin'], axis=1)
-```
-
-
-```python
-data = pd.concat([data, cyl_dummies, yr_dummies, orig_dummies], axis=1)
-data.head()
+data["make"] = data["car name"].str.split().apply(lambda x: x[0])
+data
 ```
 
 
@@ -880,41 +225,1129 @@ data.head()
     <tr style="text-align: right;">
       <th></th>
       <th>mpg</th>
+      <th>cylinders</th>
       <th>displacement</th>
       <th>horsepower</th>
       <th>weight</th>
       <th>acceleration</th>
+      <th>model year</th>
+      <th>origin</th>
       <th>car name</th>
-      <th>cyl_4</th>
-      <th>cyl_5</th>
-      <th>cyl_6</th>
-      <th>cyl_8</th>
-      <th>...</th>
-      <th>yr_75</th>
-      <th>yr_76</th>
-      <th>yr_77</th>
-      <th>yr_78</th>
-      <th>yr_79</th>
-      <th>yr_80</th>
-      <th>yr_81</th>
-      <th>yr_82</th>
-      <th>orig_2</th>
-      <th>orig_3</th>
+      <th>make</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
       <td>18.0</td>
+      <td>8</td>
       <td>307.0</td>
       <td>130</td>
       <td>3504</td>
       <td>12.0</td>
+      <td>70</td>
+      <td>1</td>
       <td>chevrolet chevelle malibu</td>
+      <td>chevrolet</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>15.0</td>
+      <td>8</td>
+      <td>350.0</td>
+      <td>165</td>
+      <td>3693</td>
+      <td>11.5</td>
+      <td>70</td>
+      <td>1</td>
+      <td>buick skylark 320</td>
+      <td>buick</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>18.0</td>
+      <td>8</td>
+      <td>318.0</td>
+      <td>150</td>
+      <td>3436</td>
+      <td>11.0</td>
+      <td>70</td>
+      <td>1</td>
+      <td>plymouth satellite</td>
+      <td>plymouth</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>16.0</td>
+      <td>8</td>
+      <td>304.0</td>
+      <td>150</td>
+      <td>3433</td>
+      <td>12.0</td>
+      <td>70</td>
+      <td>1</td>
+      <td>amc rebel sst</td>
+      <td>amc</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>17.0</td>
+      <td>8</td>
+      <td>302.0</td>
+      <td>140</td>
+      <td>3449</td>
+      <td>10.5</td>
+      <td>70</td>
+      <td>1</td>
+      <td>ford torino</td>
+      <td>ford</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>387</th>
+      <td>27.0</td>
+      <td>4</td>
+      <td>140.0</td>
+      <td>86</td>
+      <td>2790</td>
+      <td>15.6</td>
+      <td>82</td>
+      <td>1</td>
+      <td>ford mustang gl</td>
+      <td>ford</td>
+    </tr>
+    <tr>
+      <th>388</th>
+      <td>44.0</td>
+      <td>4</td>
+      <td>97.0</td>
+      <td>52</td>
+      <td>2130</td>
+      <td>24.6</td>
+      <td>82</td>
+      <td>2</td>
+      <td>vw pickup</td>
+      <td>vw</td>
+    </tr>
+    <tr>
+      <th>389</th>
+      <td>32.0</td>
+      <td>4</td>
+      <td>135.0</td>
+      <td>84</td>
+      <td>2295</td>
+      <td>11.6</td>
+      <td>82</td>
+      <td>1</td>
+      <td>dodge rampage</td>
+      <td>dodge</td>
+    </tr>
+    <tr>
+      <th>390</th>
+      <td>28.0</td>
+      <td>4</td>
+      <td>120.0</td>
+      <td>79</td>
+      <td>2625</td>
+      <td>18.6</td>
+      <td>82</td>
+      <td>1</td>
+      <td>ford ranger</td>
+      <td>ford</td>
+    </tr>
+    <tr>
+      <th>391</th>
+      <td>31.0</td>
+      <td>4</td>
+      <td>119.0</td>
+      <td>82</td>
+      <td>2720</td>
+      <td>19.4</td>
+      <td>82</td>
+      <td>1</td>
+      <td>chevy s-10</td>
+      <td>chevy</td>
+    </tr>
+  </tbody>
+</table>
+<p>392 rows × 10 columns</p>
+</div>
+
+
+
+We can look at the `pandas` data types for this dataset using `.info()`:
+
+
+```python
+data.info()
+```
+
+    <class 'pandas.core.frame.DataFrame'>
+    RangeIndex: 392 entries, 0 to 391
+    Data columns (total 10 columns):
+     #   Column        Non-Null Count  Dtype  
+    ---  ------        --------------  -----  
+     0   mpg           392 non-null    float64
+     1   cylinders     392 non-null    int64  
+     2   displacement  392 non-null    float64
+     3   horsepower    392 non-null    int64  
+     4   weight        392 non-null    int64  
+     5   acceleration  392 non-null    float64
+     6   model year    392 non-null    int64  
+     7   origin        392 non-null    int64  
+     8   car name      392 non-null    object 
+     9   make          392 non-null    object 
+    dtypes: float64(3), int64(5), object(2)
+    memory usage: 30.8+ KB
+
+
+Without digging any further into the _meaning_ of these columns, this print-out tells us that we _can_ use all columns except for `car name` and `make` in a multiple linear regression, without the model crashing.
+
+However a better modeling process would attempt to make a distinction between which of the variables are genuinely representing numbers, and which are actually representing categories.
+
+### Numeric Variables
+
+Numeric variables can be either continuous or discrete.
+
+***Continuous*** variables correspond to "real numbers" in mathematics, and floating point numbers in code. Essentially these variables can have any value on the number line, and usually have a decimal place in their code representation.
+
+***Discrete*** numeric variables typically correspond to "whole numbers" in mathematics, and integers in code. These variables have gaps between their values.
+
+Below we plot `weight`, an example of a continuous variable, and `model year`, an example of a discrete variable, vs. the target, `mpg`.
+
+
+```python
+import matplotlib.pyplot as plt
+
+fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12,5))
+
+data.plot.scatter(x="weight", y="mpg", ax=ax1)
+data.plot.scatter(x="model year", y="mpg", ax=ax2);
+```
+
+
+    
+![png](index_files/index_9_0.png)
+    
+
+
+You can tell that `model year` is discrete because of the gaps between the vertical lines of values, whereas `weight` is continuous because it's more filled in, like a "cloud", and doesn't have those gaps.
+
+### Categorical Variables
+
+Categorical variables can actually be strings _or_ numbers.
+
+***String*** categorical variables will be fairly obvious due to their data type (`object` in `pandas`). For example, `make` is a categorical variable. It cannot be used in a scatter plot, and it will cause an error if you try to use it in a multiple regression model without additional transformations.
+
+However it can be represented by a bar plot. For example, we can plot the mean `mpg`, grouped by `make`.
+
+
+```python
+fig, ax = plt.subplots(figsize=(12,5))
+data.groupby("make").mean().plot.bar(y="mpg", ax=ax);
+```
+
+
+    
+![png](index_files/index_12_0.png)
+    
+
+
+***Discrete*** number categorical variables can be more difficult to spot. For example, `origin` is actually a categorical variable in this dataset, even though it is encoded as a number.
+
+
+```python
+data["origin"].value_counts()
+```
+
+
+
+
+    1    245
+    3     79
+    2     68
+    Name: origin, dtype: int64
+
+
+
+An `origin` of 1 means the car maker is from the United States, 2 means the car maker is from Europe, and 3 means the car maker is from Asia.
+
+
+```python
+data[["make", "origin"]].groupby("make").first().sort_values("origin")
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>origin</th>
+    </tr>
+    <tr>
+      <th>make</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>amc</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>plymouth</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>pontiac</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>hi</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>ford</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>dodge</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>mercury</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>chrysler</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>oldsmobile</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>chevrolet</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>chevroelt</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>capri</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>cadillac</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>buick</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>chevy</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>saab</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>renault</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>vokswagen</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>volkswagen</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>peugeot</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>opel</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>triumph</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>mercedes</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>mercedes-benz</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>volvo</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>fiat</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>bmw</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>audi</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>vw</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>mazda</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>maxda</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>honda</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>subaru</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>toyota</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>toyouta</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>datsun</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>nissan</th>
+      <td>3</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+Discrete categorical variables like `origin` can be represented with either a scatter plot or a bar plot.
+
+
+```python
+fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12,5))
+
+data.plot.scatter(x="origin", y="mpg", ax=ax1)
+data.groupby("origin").mean().plot.bar(y="mpg", ax=ax2);
+```
+
+
+    
+![png](index_files/index_18_0.png)
+    
+
+
+### Identifying Numeric vs. Categorical Variables
+
+In some cases, the data type clearly indicates what kind of variable it should be. A **continuous** variable is essentially always **numeric**, and a **string** variable is essentially always **categorical**.
+
+For **discrete** variables, you need to investigate the values as well as any provided documentation. Then ask yourself:
+
+> Is an increase of 2 in this variable twice as much as an increase of 1?
+
+If 2 is "twice as much" as 1, that means it is reasonable to treat the variable as a numeric discrete variable. If not, the variable should be treated as categorical.
+
+Going back to our examples above:
+
+* `model year`: Is an increase of 2 years twice as much as an increase of 1 year?
+  * This seems like a reasonable way to think about the data, so we'll treat it as numeric
+* `origin`: Is an increase of 2 (US to Asia) twice as much as an increase of 1 (US to Europe, or Europe to Asia)?
+  * It's hard to make sense of this. Treating `origin` as categorical makes a lot more sense
+
+## Transforming Categorical Variables with One-Hot Encoding
+
+In order to use a categorical variable in a model, we'll create multiple ***dummy variables***, one for each category of the categorical variable.
+
+First we'll walk through how this could be done step-by-step, then show you the `get_dummies` method that can achieve this more quickly and efficiently.
+
+### Creating Dummy Variables from Scratch
+
+Let's create a copy of our data that only includes the `origin` column.
+
+
+```python
+origin_df = data[["origin"]].copy()
+origin_df.sample(10, random_state=1)
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>origin</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>81</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>165</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>351</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>119</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>379</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>236</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>78</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>92</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>80</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>333</th>
+      <td>3</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+The intuition here is, _what if we create a column that just says whether `origin` is equal to 1?_
+
+We might do something like this:
+
+
+```python
+origin_df["origin_us"] = origin_df["origin"] == 1
+origin_df.sample(10, random_state=1)
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>origin</th>
+      <th>origin_us</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>81</th>
+      <td>3</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>165</th>
+      <td>3</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>351</th>
+      <td>3</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>119</th>
+      <td>2</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>379</th>
+      <td>3</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>236</th>
+      <td>1</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <th>78</th>
+      <td>2</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>92</th>
+      <td>1</td>
+      <td>True</td>
+    </tr>
+    <tr>
+      <th>80</th>
+      <td>3</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>333</th>
+      <td>3</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+Except, our model is expecting _integers_, not _booleans_, so we convert `True` to 1 and `False` to 0:
+
+
+```python
+origin_df["origin_us"] = (origin_df["origin"] == 1).apply(int)
+origin_df.sample(10, random_state=1)
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>origin</th>
+      <th>origin_us</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>81</th>
+      <td>3</td>
       <td>0</td>
+    </tr>
+    <tr>
+      <th>165</th>
+      <td>3</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>351</th>
+      <td>3</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>119</th>
+      <td>2</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>379</th>
+      <td>3</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>236</th>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>78</th>
+      <td>2</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>92</th>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>80</th>
+      <td>3</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>333</th>
+      <td>3</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+Then we could repeat the process for European origin and Asian origin:
+
+
+```python
+origin_df["origin_eu"] = (origin_df["origin"] == 2).apply(int)
+origin_df["origin_as"] = (origin_df["origin"] == 3).apply(int)
+origin_df.sample(10, random_state=1)
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>origin</th>
+      <th>origin_us</th>
+      <th>origin_eu</th>
+      <th>origin_as</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>81</th>
+      <td>3</td>
       <td>0</td>
       <td>0</td>
       <td>1</td>
+    </tr>
+    <tr>
+      <th>165</th>
+      <td>3</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>351</th>
+      <td>3</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>119</th>
+      <td>2</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>379</th>
+      <td>3</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>236</th>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>78</th>
+      <td>2</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>92</th>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>80</th>
+      <td>3</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>333</th>
+      <td>3</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+Each of these newly-created variables, `us_origin`, `eu_origin`, and `as_origin`, are _dummy_ variables. They are called this because the "real" variable is `origin`, and these are just stand-ins.
+
+The overall process of creating a dummy variable for each value of `origin` is called ***one-hot encoding***. The name "one-hot" comes from digital circuitry, and it means that when you look across all of the dummy variables from one original variable, only one of them should have a value of 1, and the rest should be 0.
+
+### One-Hot Encoding with `pandas`
+
+Instead of creating a new line of code for each value of a column, you can use the `get_dummies` function from `pandas` ([documentation here](https://pandas.pydata.org/docs/reference/api/pandas.get_dummies.html)).
+
+
+```python
+origin_df = data[["origin"]].copy()
+origin_df.sample(10, random_state=1)
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>origin</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>81</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>165</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>351</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>119</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>379</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>236</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>78</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>92</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>80</th>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>333</th>
+      <td>3</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+origin_df = pd.get_dummies(origin_df, columns=["origin"])
+origin_df
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>origin_1</th>
+      <th>origin_2</th>
+      <th>origin_3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>387</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>388</th>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>389</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>390</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>391</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+<p>392 rows × 3 columns</p>
+</div>
+
+
+
+Some things to note about this version of one-hot encoding:
+
+* The original column (`origin`) has been removed
+* The names of the new columns come from the original column name `"origin"` + `_` + the value (1, 2, or 3)
+  * If you want these to be more descriptive, consider changing their values _before_ one-hot encoding. For example, you could replace 1, 2, and 3 with "us", "eu", and "as" to be more similar to the example above. This choice is up to you, since these are the names that will appear in the regression results
+
+We can also do one-hot encoding on the entire DataFrame at once, just specifying the columns we consider to be categorical:
+
+
+```python
+pd.get_dummies(data, columns=["origin", "make"])
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>mpg</th>
+      <th>cylinders</th>
+      <th>displacement</th>
+      <th>horsepower</th>
+      <th>weight</th>
+      <th>acceleration</th>
+      <th>model year</th>
+      <th>car name</th>
+      <th>origin_1</th>
+      <th>origin_2</th>
+      <th>...</th>
+      <th>make_renault</th>
+      <th>make_saab</th>
+      <th>make_subaru</th>
+      <th>make_toyota</th>
+      <th>make_toyouta</th>
+      <th>make_triumph</th>
+      <th>make_vokswagen</th>
+      <th>make_volkswagen</th>
+      <th>make_volvo</th>
+      <th>make_vw</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>18.0</td>
+      <td>8</td>
+      <td>307.0</td>
+      <td>130</td>
+      <td>3504</td>
+      <td>12.0</td>
+      <td>70</td>
+      <td>chevrolet chevelle malibu</td>
+      <td>1</td>
+      <td>0</td>
       <td>...</td>
       <td>0</td>
       <td>0</td>
@@ -930,15 +1363,15 @@ data.head()
     <tr>
       <th>1</th>
       <td>15.0</td>
+      <td>8</td>
       <td>350.0</td>
       <td>165</td>
       <td>3693</td>
       <td>11.5</td>
+      <td>70</td>
       <td>buick skylark 320</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
       <td>1</td>
+      <td>0</td>
       <td>...</td>
       <td>0</td>
       <td>0</td>
@@ -954,15 +1387,15 @@ data.head()
     <tr>
       <th>2</th>
       <td>18.0</td>
+      <td>8</td>
       <td>318.0</td>
       <td>150</td>
       <td>3436</td>
       <td>11.0</td>
+      <td>70</td>
       <td>plymouth satellite</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
       <td>1</td>
+      <td>0</td>
       <td>...</td>
       <td>0</td>
       <td>0</td>
@@ -978,15 +1411,15 @@ data.head()
     <tr>
       <th>3</th>
       <td>16.0</td>
+      <td>8</td>
       <td>304.0</td>
       <td>150</td>
       <td>3433</td>
       <td>12.0</td>
+      <td>70</td>
       <td>amc rebel sst</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
       <td>1</td>
+      <td>0</td>
       <td>...</td>
       <td>0</td>
       <td>0</td>
@@ -1002,15 +1435,159 @@ data.head()
     <tr>
       <th>4</th>
       <td>17.0</td>
+      <td>8</td>
       <td>302.0</td>
       <td>140</td>
       <td>3449</td>
       <td>10.5</td>
+      <td>70</td>
       <td>ford torino</td>
+      <td>1</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>387</th>
+      <td>27.0</td>
+      <td>4</td>
+      <td>140.0</td>
+      <td>86</td>
+      <td>2790</td>
+      <td>15.6</td>
+      <td>82</td>
+      <td>ford mustang gl</td>
+      <td>1</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>388</th>
+      <td>44.0</td>
+      <td>4</td>
+      <td>97.0</td>
+      <td>52</td>
+      <td>2130</td>
+      <td>24.6</td>
+      <td>82</td>
+      <td>vw pickup</td>
+      <td>0</td>
+      <td>1</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
       <td>0</td>
       <td>0</td>
       <td>0</td>
       <td>1</td>
+    </tr>
+    <tr>
+      <th>389</th>
+      <td>32.0</td>
+      <td>4</td>
+      <td>135.0</td>
+      <td>84</td>
+      <td>2295</td>
+      <td>11.6</td>
+      <td>82</td>
+      <td>dodge rampage</td>
+      <td>1</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>390</th>
+      <td>28.0</td>
+      <td>4</td>
+      <td>120.0</td>
+      <td>79</td>
+      <td>2625</td>
+      <td>18.6</td>
+      <td>82</td>
+      <td>ford ranger</td>
+      <td>1</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>391</th>
+      <td>31.0</td>
+      <td>4</td>
+      <td>119.0</td>
+      <td>82</td>
+      <td>2720</td>
+      <td>19.4</td>
+      <td>82</td>
+      <td>chevy s-10</td>
+      <td>1</td>
+      <td>0</td>
       <td>...</td>
       <td>0</td>
       <td>0</td>
@@ -1025,10 +1602,1396 @@ data.head()
     </tr>
   </tbody>
 </table>
-<p>5 rows × 24 columns</p>
+<p>392 rows × 48 columns</p>
 </div>
 
 
 
+## The Dummy Variable Trap
+
+Due to the nature of how dummy variables are created, one variable can be predicted from all of the others. For example, if you know that `origin_1` is 0 and `origin_2` is 0, then you already know that `origin_3` must be 1.
+
+We demonstrate this in code below.
+
+
+```python
+origin_df["origin_1_prediction"] = 1 - origin_df["origin_2"] - origin_df["origin_3"]
+origin_df
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>origin_1</th>
+      <th>origin_2</th>
+      <th>origin_3</th>
+      <th>origin_1_prediction</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>387</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>388</th>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>389</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>390</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>391</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+<p>392 rows × 4 columns</p>
+</div>
+
+
+
+Our `origin_1_prediction` matches our `origin_1` value 100% of the time:
+
+
+```python
+(origin_df["origin_1_prediction"] == origin_df["origin_1"]).value_counts(normalize=True)
+```
+
+
+
+
+    True    1.0
+    dtype: float64
+
+
+
+This is known as perfect ***multicollinearity*** and it can be a problem for regression. Multicollinearity will be covered in depth later but the basic idea behind perfect multicollinearity is that you can *perfectly* predict what one variable will be using some combination of the other variables.
+
+When features in a linear regression have perfect multicollinearity due to the algorithm for creating dummy variables, this is known as the ***dummy variable trap***.
+
+Fortunately, the dummy variable trap can be avoided by simply dropping one of the dummy variables. You can do this by subsetting the dataframe manually or, more conveniently, by passing `drop_first=True` into `get_dummies()`: 
+
+
+```python
+pd.get_dummies(data, columns=["origin"], drop_first=True)
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>mpg</th>
+      <th>cylinders</th>
+      <th>displacement</th>
+      <th>horsepower</th>
+      <th>weight</th>
+      <th>acceleration</th>
+      <th>model year</th>
+      <th>car name</th>
+      <th>make</th>
+      <th>origin_2</th>
+      <th>origin_3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>18.0</td>
+      <td>8</td>
+      <td>307.0</td>
+      <td>130</td>
+      <td>3504</td>
+      <td>12.0</td>
+      <td>70</td>
+      <td>chevrolet chevelle malibu</td>
+      <td>chevrolet</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>15.0</td>
+      <td>8</td>
+      <td>350.0</td>
+      <td>165</td>
+      <td>3693</td>
+      <td>11.5</td>
+      <td>70</td>
+      <td>buick skylark 320</td>
+      <td>buick</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>18.0</td>
+      <td>8</td>
+      <td>318.0</td>
+      <td>150</td>
+      <td>3436</td>
+      <td>11.0</td>
+      <td>70</td>
+      <td>plymouth satellite</td>
+      <td>plymouth</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>16.0</td>
+      <td>8</td>
+      <td>304.0</td>
+      <td>150</td>
+      <td>3433</td>
+      <td>12.0</td>
+      <td>70</td>
+      <td>amc rebel sst</td>
+      <td>amc</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>17.0</td>
+      <td>8</td>
+      <td>302.0</td>
+      <td>140</td>
+      <td>3449</td>
+      <td>10.5</td>
+      <td>70</td>
+      <td>ford torino</td>
+      <td>ford</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>387</th>
+      <td>27.0</td>
+      <td>4</td>
+      <td>140.0</td>
+      <td>86</td>
+      <td>2790</td>
+      <td>15.6</td>
+      <td>82</td>
+      <td>ford mustang gl</td>
+      <td>ford</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>388</th>
+      <td>44.0</td>
+      <td>4</td>
+      <td>97.0</td>
+      <td>52</td>
+      <td>2130</td>
+      <td>24.6</td>
+      <td>82</td>
+      <td>vw pickup</td>
+      <td>vw</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>389</th>
+      <td>32.0</td>
+      <td>4</td>
+      <td>135.0</td>
+      <td>84</td>
+      <td>2295</td>
+      <td>11.6</td>
+      <td>82</td>
+      <td>dodge rampage</td>
+      <td>dodge</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>390</th>
+      <td>28.0</td>
+      <td>4</td>
+      <td>120.0</td>
+      <td>79</td>
+      <td>2625</td>
+      <td>18.6</td>
+      <td>82</td>
+      <td>ford ranger</td>
+      <td>ford</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>391</th>
+      <td>31.0</td>
+      <td>4</td>
+      <td>119.0</td>
+      <td>82</td>
+      <td>2720</td>
+      <td>19.4</td>
+      <td>82</td>
+      <td>chevy s-10</td>
+      <td>chevy</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+<p>392 rows × 11 columns</p>
+</div>
+
+
+
+Because this dataframe no longer includes `origin_1`, there is no longer enough information to perfectly predict `origin_2` or `origin_3`. The perfect multicollinearity has been eliminated!
+
+## Multiple Regression with One-Hot Encoded Variables
+
+Let's go ahead and create a linear regression model with `weight`, `model year`, and `origin`.
+
+
+```python
+y = data["mpg"]
+X = data[["weight", "model year", "origin"]]
+X
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>weight</th>
+      <th>model year</th>
+      <th>origin</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>3504</td>
+      <td>70</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>3693</td>
+      <td>70</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3436</td>
+      <td>70</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>3433</td>
+      <td>70</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>3449</td>
+      <td>70</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>387</th>
+      <td>2790</td>
+      <td>82</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>388</th>
+      <td>2130</td>
+      <td>82</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>389</th>
+      <td>2295</td>
+      <td>82</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>390</th>
+      <td>2625</td>
+      <td>82</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>391</th>
+      <td>2720</td>
+      <td>82</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+<p>392 rows × 3 columns</p>
+</div>
+
+
+
+
+```python
+X = pd.get_dummies(X, columns=["origin"], drop_first=True)
+X
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>weight</th>
+      <th>model year</th>
+      <th>origin_2</th>
+      <th>origin_3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>3504</td>
+      <td>70</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>3693</td>
+      <td>70</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3436</td>
+      <td>70</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>3433</td>
+      <td>70</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>3449</td>
+      <td>70</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>387</th>
+      <td>2790</td>
+      <td>82</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>388</th>
+      <td>2130</td>
+      <td>82</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>389</th>
+      <td>2295</td>
+      <td>82</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>390</th>
+      <td>2625</td>
+      <td>82</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>391</th>
+      <td>2720</td>
+      <td>82</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+<p>392 rows × 4 columns</p>
+</div>
+
+
+
+
+```python
+import statsmodels.api as sm
+
+model = sm.OLS(y, sm.add_constant(X))
+results = model.fit()
+
+print(results.summary())
+```
+
+                                OLS Regression Results                            
+    ==============================================================================
+    Dep. Variable:                    mpg   R-squared:                       0.819
+    Model:                            OLS   Adj. R-squared:                  0.817
+    Method:                 Least Squares   F-statistic:                     437.9
+    Date:                Wed, 11 May 2022   Prob (F-statistic):          3.53e-142
+    Time:                        16:04:22   Log-Likelihood:                -1026.1
+    No. Observations:                 392   AIC:                             2062.
+    Df Residuals:                     387   BIC:                             2082.
+    Df Model:                           4                                         
+    Covariance Type:            nonrobust                                         
+    ==============================================================================
+                     coef    std err          t      P>|t|      [0.025      0.975]
+    ------------------------------------------------------------------------------
+    const        -18.3069      4.017     -4.557      0.000     -26.205     -10.409
+    weight        -0.0059      0.000    -22.647      0.000      -0.006      -0.005
+    model year     0.7698      0.049     15.818      0.000       0.674       0.866
+    origin_2       1.9763      0.518      3.815      0.000       0.958       2.995
+    origin_3       2.2145      0.519      4.268      0.000       1.194       3.235
+    ==============================================================================
+    Omnibus:                       32.293   Durbin-Watson:                   1.251
+    Prob(Omnibus):                  0.000   Jarque-Bera (JB):               58.234
+    Skew:                           0.507   Prob(JB):                     2.26e-13
+    Kurtosis:                       4.593   Cond. No.                     7.39e+04
+    ==============================================================================
+    
+    Notes:
+    [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+    [2] The condition number is large, 7.39e+04. This might indicate that there are
+    strong multicollinearity or other numerical problems.
+
+
+### Interpreting Model Results
+
+Now, how do we interpret these results?
+
+Just like any other multiple regression model, we can look at the F-statistic p-value to see if it's statistically significant (it is!) and at the adjusted R-Squared to see the proportion of variance explained (around 82%).
+
+The `weight`, and `model year` interpretations are also very similar to previous models we've created. For each increase of 1 lb in weight, we see an associated drop of about 0.006 MPG. For each increase of 1 in model year, we see an associated increase of about 0.77 MPG.
+
+Dropping the first variable affects the interpretation of the other regression coefficients. The dropped category becomes what is known as the ***reference category***. The regression coefficients that result from fitting the remaining variables represent the change *relative* to the reference.
+
+In this regression, an `origin` of 1 (i.e. US origin) is the reference category. This has implications for the interpretation of `const` as well as the other `origin` features.
+
+First, `const` means that all other variables are 0. This means `weight` is 0, `model year` is 0, and `origin` is category 1 (i.e. US origin).
+
+`origin_2` means the difference associated with a car being from a European car maker vs. a US car maker. In other words, compared to US car makers, we see an associated increase of about 2 MPG for European car makers.
+
+`origin_3` is also comparing to US car makers. We see an associated increase of about 2.2 MPG for Asian car makers compared to US car makers.
+
+## Level Up: One-Hot Encoding with Scikit-Learn
+
+The machine learning library scikit-learn also has functionality for one-hot encoding ([documentation here](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html)). It is essential to use this approach to one-hot encoding in a predictive machine learning context, and optional to use it in an inferential context like we are currently using.
+
+
+```python
+from sklearn.preprocessing import OneHotEncoder
+
+ohe = OneHotEncoder(drop="first", sparse=False)
+```
+
+This approach does not allow you to specify certain columns and pass the entire dataframe in. Instead, you need to create a dataframe with only the column(s) that require one-hot encoding.
+
+For this example we'll select just `origin`.
+
+
+```python
+data_cat = data[["origin"]].copy()
+data_cat
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>origin</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>387</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>388</th>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>389</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>390</th>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>391</th>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+<p>392 rows × 1 columns</p>
+</div>
+
+
+
+The result from the scikit-learn one-hot encoder is also not a dataframe.
+
+
+```python
+ohe.fit_transform(data_cat)
+```
+
+
+
+
+    array([[0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 1.],
+           [1., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [1., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 1.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 1.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 1.],
+           [0., 0.],
+           [1., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 1.],
+           [1., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [1., 0.],
+           [0., 1.],
+           [0., 0.],
+           [1., 0.],
+           [0., 0.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [0., 1.],
+           [1., 0.],
+           [1., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 1.],
+           [0., 0.],
+           [1., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 1.],
+           [1., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [1., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [1., 0.],
+           [0., 1.],
+           [1., 0.],
+           [0., 1.],
+           [1., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 1.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 1.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [1., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 1.],
+           [0., 1.],
+           [0., 1.],
+           [0., 1.],
+           [0., 0.],
+           [0., 1.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 1.],
+           [1., 0.],
+           [0., 1.],
+           [0., 1.],
+           [1., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 1.],
+           [0., 1.],
+           [0., 1.],
+           [0., 1.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 1.],
+           [0., 1.],
+           [0., 1.],
+           [1., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 1.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 1.],
+           [0., 1.],
+           [0., 1.],
+           [0., 1.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 1.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.],
+           [1., 0.],
+           [0., 0.],
+           [0., 0.],
+           [0., 0.]])
+
+
+
+We will need to create a new dataframe ourselves.
+
+
+```python
+data_cat_ohe = pd.DataFrame(
+    data=ohe.fit_transform(data_cat),
+    columns=[f"origin_{cat}" for cat in ohe.categories_[0][1:]]
+)
+data_cat_ohe
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>origin_2</th>
+      <th>origin_3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>387</th>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>388</th>
+      <td>1.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>389</th>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>390</th>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>391</th>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>392 rows × 2 columns</p>
+</div>
+
+
+
+Then we can append the one-hot encoded data back with the numeric data to create an overall X dataframe:
+
+
+```python
+X_sklearn = pd.concat([data[["weight", "model year"]], data_cat_ohe], axis=1)
+X_sklearn
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>weight</th>
+      <th>model year</th>
+      <th>origin_2</th>
+      <th>origin_3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>3504</td>
+      <td>70</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>3693</td>
+      <td>70</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3436</td>
+      <td>70</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>3433</td>
+      <td>70</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>3449</td>
+      <td>70</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>387</th>
+      <td>2790</td>
+      <td>82</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>388</th>
+      <td>2130</td>
+      <td>82</td>
+      <td>1.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>389</th>
+      <td>2295</td>
+      <td>82</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>390</th>
+      <td>2625</td>
+      <td>82</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>391</th>
+      <td>2720</td>
+      <td>82</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>392 rows × 4 columns</p>
+</div>
+
+
+
+Then we can plug that dataframe into the model, with the same results as `pd.get_dummies`:
+
+
+```python
+model_2 = sm.OLS(y, sm.add_constant(X_sklearn))
+results_2 = model_2.fit()
+
+print(results.params)
+print(results_2.params)
+```
+
+    const        -18.306944
+    weight        -0.005887
+    model year     0.769849
+    origin_2       1.976306
+    origin_3       2.214534
+    dtype: float64
+    const        -18.306944
+    weight        -0.005887
+    model year     0.769849
+    origin_2       1.976306
+    origin_3       2.214534
+    dtype: float64
+
+
+This may seem like a lot of extra work, but the key difference is that the scikit-learn `ohe` object "remembers" the categories that it created, and can apply the same transformation to a future dataset. This is necessary in a machine learning context, but you can consider if optional for now.
+
 ## Summary
-Great! In this lesson, you learned about categorical variables and how they are different from continuous variables. You also learned how to include them in your multiple linear regression model using label encoding or dummy variables. You also learned about the dummy variable trap and how it can be avoided.
+
+Great! In this lesson, you learned about categorical variables and how they are different from numeric variables. You also learned how to include them in your multiple linear regression model using dummy variables. You also learned about the dummy variable trap and how it can be avoided.
