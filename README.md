@@ -672,6 +672,8 @@ data[["make", "origin"]].groupby("make").first().sort_values("origin")
 
 
 
+(Looking at the list above, you might notice some typos in the `make` column. We'll address those later!)
+
 Discrete categorical variables like `origin` can be represented with either a scatter plot or a bar plot.
 
 
@@ -884,7 +886,7 @@ origin_df.sample(10, random_state=1)
 
 
 
-Except, our model is expecting _integers_, not _booleans_, so we convert `True` to 1 and `False` to 0:
+Except, our StatsModels model is expecting _integers_, not _booleans_, so we convert `True` to 1 and `False` to 0:
 
 
 ```python
@@ -1087,7 +1089,7 @@ origin_df.sample(10, random_state=1)
 
 
 
-Each of these newly-created variables, `us_origin`, `eu_origin`, and `as_origin`, are _dummy_ variables. They are called this because the "real" variable is `origin`, and these are just stand-ins.
+Each of these newly-created variables, `origin_us`, `origin_eu`, and `origin_as`, are _dummy_ variables. They are called this because the "real" variable is `origin`, and these are just stand-ins.
 
 The overall process of creating a dummy variable for each value of `origin` is called ***one-hot encoding***. The name "one-hot" comes from digital circuitry, and it means that when you look across all of the dummy variables from one original variable, only one of them should have a value of 1, and the rest should be 0.
 
@@ -1606,6 +1608,11 @@ pd.get_dummies(data, columns=["origin", "make"])
 </div>
 
 
+
+Note that you can skip specifying a `columns` argument and `get_dummies` will automatically create dummy variables for all columns with a data type of `object` or `category`. This is a convenient shortcut if your dataset is set up appropriately, but in this case we specified the `columns` because:
+
+1. `car name` is type `object` but we don't actually want to one-hot encode it. We'll drop it before feeding it into the final model, but for now it's there for informational purposes.
+2. `origin` is type `int` but we want to treat it as a category and one-hot encode it. If we wanted to change the data type so that `get_dummies` would automatically encode `origin`, we could run `data["origin"] = data["origin"].astype("category")`
 
 ## The Dummy Variable Trap
 
@@ -2199,8 +2206,8 @@ print(results.summary())
     Dep. Variable:                    mpg   R-squared:                       0.819
     Model:                            OLS   Adj. R-squared:                  0.817
     Method:                 Least Squares   F-statistic:                     437.9
-    Date:                Wed, 11 May 2022   Prob (F-statistic):          3.53e-142
-    Time:                        16:04:22   Log-Likelihood:                -1026.1
+    Date:                Wed, 01 Jun 2022   Prob (F-statistic):          3.53e-142
+    Time:                        15:44:58   Log-Likelihood:                -1026.1
     No. Observations:                 392   AIC:                             2062.
     Df Residuals:                     387   BIC:                             2082.
     Df Model:                           4                                         
@@ -2254,6 +2261,8 @@ from sklearn.preprocessing import OneHotEncoder
 
 ohe = OneHotEncoder(drop="first", sparse=False)
 ```
+
+`drop="first"` is equivalent to `drop_first=True` in `pd.get_dummies`. `sparse=False` specifies that we want the result to be a NumPy array rather than a [sparse matrix](https://docs.scipy.org/doc/scipy/reference/sparse.html). Sparse matrices are more efficient in their use of memory space but can't be converted to dataframes as easily.
 
 This approach does not allow you to specify certain columns and pass the entire dataframe in. Instead, you need to create a dataframe with only the column(s) that require one-hot encoding.
 
@@ -2345,7 +2354,9 @@ The result from the scikit-learn one-hot encoder is also not a dataframe.
 
 
 ```python
-ohe.fit_transform(data_cat)
+ohe.fit(data_cat)
+
+ohe.transform(data_cat)
 ```
 
 
@@ -2751,7 +2762,7 @@ We will need to create a new dataframe ourselves.
 
 ```python
 data_cat_ohe = pd.DataFrame(
-    data=ohe.fit_transform(data_cat),
+    data=ohe.transform(data_cat),
     columns=[f"origin_{cat}" for cat in ohe.categories_[0][1:]]
 )
 data_cat_ohe
@@ -2990,7 +3001,7 @@ print(results_2.params)
     dtype: float64
 
 
-This may seem like a lot of extra work, but the key difference is that the scikit-learn `ohe` object "remembers" the categories that it created, and can apply the same transformation to a future dataset. This is necessary in a machine learning context, but you can consider if optional for now.
+This may seem like a lot of extra work, but the key difference is that the scikit-learn `ohe` object "remembers" the categories that it created, and can apply the same transformation to a future dataset. This is necessary in a machine learning context, but you can consider it optional for now.
 
 ## Summary
 
