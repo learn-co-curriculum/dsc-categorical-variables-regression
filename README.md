@@ -456,7 +456,7 @@ However it can be represented by a bar plot. For example, we can plot the mean `
 
 ```python
 fig, ax = plt.subplots(figsize=(12,5))
-data.groupby("make").mean().plot.bar(y="mpg", ax=ax);
+data.groupby("make").mean('mpg').plot.bar(y='mpg', ax=ax);
 ```
 
 
@@ -475,10 +475,11 @@ data["origin"].value_counts()
 
 
 
+    origin
     1    245
     3     79
     2     68
-    Name: origin, dtype: int64
+    Name: count, dtype: int64
 
 
 
@@ -681,7 +682,7 @@ Discrete categorical variables like `origin` can be represented with either a sc
 fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12,5))
 
 data.plot.scatter(x="origin", y="mpg", ax=ax1)
-data.groupby("origin").mean().plot.bar(y="mpg", ax=ax2);
+data.groupby("origin").mean('mpg').plot.bar(y='mpg', ax=ax2);
 ```
 
 
@@ -1176,7 +1177,7 @@ origin_df.sample(10, random_state=1)
 
 
 ```python
-origin_df = pd.get_dummies(origin_df, columns=["origin"])
+origin_df = pd.get_dummies(origin_df, columns=["origin"], dtype=int)
 origin_df
 ```
 
@@ -1290,7 +1291,7 @@ We can also do one-hot encoding on the entire DataFrame at once, just specifying
 
 
 ```python
-pd.get_dummies(data, columns=["origin", "make"])
+pd.get_dummies(data, columns=["origin", "make"], dtype=int)
 ```
 
 
@@ -1749,7 +1750,7 @@ Our `origin_1_prediction` matches our `origin_1` value 100% of the time:
 
 
     True    1.0
-    dtype: float64
+    Name: proportion, dtype: float64
 
 
 
@@ -1761,7 +1762,7 @@ Fortunately, the dummy variable trap can be avoided by simply dropping one of th
 
 
 ```python
-pd.get_dummies(data, columns=["origin"], drop_first=True)
+pd.get_dummies(data, columns=["origin"], drop_first=True, dtype=int)
 ```
 
 
@@ -2075,7 +2076,7 @@ X
 
 
 ```python
-X = pd.get_dummies(X, columns=["origin"], drop_first=True)
+X = pd.get_dummies(X, columns=["origin"], drop_first=True, dtype=int)
 X
 ```
 
@@ -2206,8 +2207,8 @@ print(results.summary())
     Dep. Variable:                    mpg   R-squared:                       0.819
     Model:                            OLS   Adj. R-squared:                  0.817
     Method:                 Least Squares   F-statistic:                     437.9
-    Date:                Wed, 01 Jun 2022   Prob (F-statistic):          3.53e-142
-    Time:                        15:44:58   Log-Likelihood:                -1026.1
+    Date:                Wed, 19 Jul 2023   Prob (F-statistic):          3.53e-142
+    Time:                        13:59:57   Log-Likelihood:                -1026.1
     No. Observations:                 392   AIC:                             2062.
     Df Residuals:                     387   BIC:                             2082.
     Df Model:                           4                                         
@@ -2259,7 +2260,7 @@ The machine learning library scikit-learn also has functionality for one-hot enc
 ```python
 from sklearn.preprocessing import OneHotEncoder
 
-ohe = OneHotEncoder(drop="first", sparse=False)
+ohe = OneHotEncoder(drop="first", sparse_output=False)
 ```
 
 `drop="first"` is equivalent to `drop_first=True` in `pd.get_dummies`. `sparse=False` specifies that we want the result to be a NumPy array rather than a [sparse matrix](https://docs.scipy.org/doc/scipy/reference/sparse.html). Sparse matrices are more efficient in their use of memory space but can't be converted to dataframes as easily.
